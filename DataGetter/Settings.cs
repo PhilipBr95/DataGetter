@@ -15,5 +15,6 @@ namespace DataGetter
 
         public int ChangeArticleEverySeconds = 10;
         public int RefreshArticlesEveryCycle = 60;
+        public int MaxDownloads = 10;
     }
 }

@@ -5,6 +5,7 @@ namespace DataGetter
 {
     internal class Program
     {
+        private static int _DownloadCount = 0;
         private static int _CurrentArticleIndex = 0;
         private static List<Article> _Articles = new List<Article>();
 
@@ -19,6 +20,12 @@ namespace DataGetter
                 //Do we need to refresh the articles?
                 if (counter >= settings.RefreshArticlesEveryCycle)
                 {
+                    if (_DownloadCount >= settings.MaxDownloads)
+                    {
+                        Console.WriteLine("Max downloads reached, exiting...");
+                        return;
+                    }
+
                     Console.WriteLine("Refreshing articles...");
 
                     foreach (var url in settings.Urls)
@@ -48,6 +55,7 @@ namespace DataGetter
                         }
                     }
 
+                    _DownloadCount++;
                     counter = 0;
                 } 
 
