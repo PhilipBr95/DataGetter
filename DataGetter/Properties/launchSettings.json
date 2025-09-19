@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "DataGetter": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
