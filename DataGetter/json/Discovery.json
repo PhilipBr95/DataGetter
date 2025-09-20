@@ -1,0 +1,25 @@
+{
+  "dev": {
+    "ids": "11ea334450945afc",
+    "name": "DataGetter",
+    "mf": "Phil",
+    "mdl": "Phil",
+    "sw": "1.0",
+    "sn": "11ea334450945afc",
+    "hw": "1.0rev2"
+  },
+  "o": {
+    "name": "bla2mqtt",
+    "sw": "2.1",
+    "url": "https://bla2mqtt.example.com/support"
+  },
+  "cmps": {
+    "message": {
+      "p": "sensor",
+      "unique_id": "1temp01ae_t"
+    }
+  },
+  "state_topic": "datagetter/state",
+  "json_attributes_topic": "datagetter/attributes",
+  "qos": 2
+}

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MQTTnet;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,8 +14,44 @@ namespace DataGetter
             "https://feeds.bbci.co.uk/news/rss.xml?edition=uk"
         ];
 
-        public int ChangeArticleEverySeconds = 10;
+        public int ChangeArticleEverySeconds = 30;
         public int RefreshArticlesEveryCycle = 60;
-        public int MaxDownloads = 10;
+        public int MaxDownloads = 100;
+        public IEnumerable<SleepTime> SleepTimes =
+        [
+            new()
+            {
+                DayOfWeeks = [DayOfWeek.Monday, 
+                                DayOfWeek.Tuesday, 
+                                DayOfWeek.Wednesday, 
+                                DayOfWeek.Thursday,
+                                DayOfWeek.Friday],
+                TimeRanges = [
+                    new TimeRange()
+                    {
+                        Start = new TimeSpan(21, 0, 0),
+                        End = new TimeSpan(7, 0, 0)
+                    },
+                    new TimeRange()
+                    {
+                        Start = new TimeSpan(9, 0, 0),
+                        End = new TimeSpan(15, 30, 0)
+                    }
+                ]
+            },
+            new()
+            {
+                DayOfWeeks = [DayOfWeek.Saturday,
+                                DayOfWeek.Sunday],
+                TimeRanges = [
+                    new TimeRange()
+                    {
+                        Start = new TimeSpan(1, 0, 0),
+                        End = new TimeSpan(9, 0, 0)
+                    }
+                ]
+            }
+        ];
+        public string Mqtt = "192.168.1.116";
     }
 }
