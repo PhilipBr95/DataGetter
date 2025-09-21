@@ -25,7 +25,7 @@ namespace DataGetter
                 .Build();
 
             var result = await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
-            Console.WriteLine($"Connected to MQTT broker {0}", result.ResultCode);
+            Log($"Connected to MQTT broker {0}", result.ResultCode);
 
             var applicationMessage = new MqttApplicationMessageBuilder()
                 .WithTopic("homeassistant/device/datagetter/datagetter/config")
@@ -42,7 +42,7 @@ namespace DataGetter
                 {
                     if (_DownloadCount >= _settings.MaxDownloads)
                     {
-                        Console.WriteLine("Max downloads reached, exiting...");
+                        Log("Max downloads reached, exiting...");
                         return;
                     }
 
@@ -89,16 +89,21 @@ namespace DataGetter
 
                 }))
             {
-                Console.WriteLine($"In sleep time @ {now}, not downloading articles...");
+                Log($"In sleep time @ {now}, not downloading articles...");
                 return true;
             }
 
             return false;
         }
 
+        private static void Log(string message)
+        {
+            Console.WriteLine($"{DateTime.Now}: {message}");
+        }
+
         private static async Task DownloadArticles()
         {
-            Console.WriteLine("Refreshing articles...");
+            Log("Refreshing articles...");
             var articles = new List<Article>();
 
             foreach (var url in _settings.Urls)
@@ -123,7 +128,7 @@ namespace DataGetter
                     };
 
                     articles.Add(article);
-                    Console.WriteLine($"Downloaded {article.Title}");
+                    Log($"Downloaded {article.Title}");
                 }
             }
 
@@ -140,7 +145,7 @@ namespace DataGetter
 
             var article = _Articles[_CurrentArticleIndex];
 
-            Console.WriteLine($"Sending article... {article.Title}");
+            Log($"Sending article... {article.Title}");
 
             var mqttFactory = new MqttClientFactory();
             using var mqttClient = mqttFactory.CreateMqttClient();
@@ -149,7 +154,7 @@ namespace DataGetter
                 .Build();
 
             var result = await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
-            Console.WriteLine($"Connected to MQTT broker {0}", result.ResultCode);
+            Log($"Connected to MQTT broker {_settings.Mqtt}: {result.ResultCode}");
 
             var applicationMessage = new MqttApplicationMessageBuilder()
                 .WithTopic("datagetter2/state")
