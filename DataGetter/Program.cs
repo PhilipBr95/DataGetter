@@ -15,7 +15,9 @@ namespace DataGetter
 
         async static Task Main(string[] args)
         {
-            var counter = int.MaxValue;
+            //Allows a full refresh on load
+            var isStarting = true;
+            var counter = 0;
 
             var mqttFactory = new MqttClientFactory();
 
@@ -38,7 +40,7 @@ namespace DataGetter
             while (true)
             {
                 //Do we need to refresh the articles?
-                if (counter >= _settings.RefreshArticlesEveryCycle)
+                if (isStarting || counter >= _settings.RefreshArticlesEveryCycle)
                 {
                     if (_DownloadCount >= _settings.MaxDownloads)
                     {
@@ -46,7 +48,7 @@ namespace DataGetter
                         return;
                     }
 
-                    if (IsSleeping(_settings) == false)
+                    if (isStarting || IsSleeping(_settings) == false)
                     {
                         _DownloadCount++;
                         await DownloadArticles();
@@ -89,7 +91,7 @@ namespace DataGetter
 
                 }))
             {
-                Log($"In sleep time @ {now}, not downloading articles...");
+                Log($"Sleeping @ {now}, not downloading articles...");
                 return true;
             }
 
@@ -138,6 +140,12 @@ namespace DataGetter
 
         private static async Task SendArticleAsync()
         {
+            if(_Articles.Count == 0)
+            {
+                Log("No articals available to send :-(");
+                return;
+            }
+
             _CurrentArticleIndex++;
 
             if (_CurrentArticleIndex >= _Articles.Count)
