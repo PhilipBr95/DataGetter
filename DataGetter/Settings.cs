@@ -14,6 +14,19 @@ namespace DataGetter
             "https://feeds.bbci.co.uk/news/rss.xml?edition=uk"
         ];
 
+        public string[] IgnoredTitles = [
+            "BBC News app",
+            "Play now",
+        ];
+
+        public ImageSettings Image = new ImageSettings()
+        {
+            Host = "192.168.1.151",
+            Username = "Phil",
+            Password = "Fred1995",
+            Paths = new List<string> { "/photo/Phil's Phone", "/photo/Gill's Phone" }
+        };
+        
         public int ChangeArticleEverySeconds = 30;
         public int RefreshArticlesEveryCycle = 60;
         public int MaxDownloads = 100;

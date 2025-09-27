@@ -1,9 +1,13 @@
 ﻿
 namespace DataGetter
 {
-    internal class SleepTime
+    internal class TimeRange
     {
-        public DayOfWeek[] DayOfWeeks { get; set; }
-        public TimeRange[] TimeRanges { get; set; }
+        public TimeRange()
+        {
+        }
+
+        public TimeSpan Start { get; set; }
+        public TimeSpan End { get; set; }
     }
 }
