@@ -23,7 +23,7 @@ namespace DataGetter
         {
             Host = "192.168.1.151",
             Username = "Phil",
-            Password = "Fred1995",
+            Password = null,
             Paths = new List<string> { "/photo/Phil's Phone", "/photo/Gill's Phone" }
         };
         
