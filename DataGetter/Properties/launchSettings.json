@@ -1,16 +1,10 @@
 {
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:62636/",
-      "sslPort": 44384
-    }
-  },
-
   "profiles": {
     "DataGetter": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "environmentVariables": {
+        "Image_Password": "Fred1995"
+      }
     },
     "Container (Dockerfile)": {
       "commandName": "Docker"
@@ -22,6 +16,13 @@
       },
       "applicationUrl": "https://localhost:5043;http://localhost:5080"
     }
+  },
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:62636/",
+      "sslPort": 44384
+    }
   }
 }
-

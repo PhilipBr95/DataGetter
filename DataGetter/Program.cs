@@ -19,7 +19,7 @@ namespace DataGetter
                 {
                     configApp.AddJsonFile("Config/appsettings.json", optional: true);
                     configApp.AddJsonFile($"Config/appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", optional: true);
-                    configApp.AddEnvironmentVariables(prefix: "APP_");
+                    configApp.AddEnvironmentVariables();
                     configApp.AddCommandLine(args);
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
@@ -28,7 +28,21 @@ namespace DataGetter
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddTransient<Settings>();
+                    services.AddTransient<Settings>(provider =>
+                    {
+                        var settings = new Settings();
+
+                        settings.Image.Password = provider.GetRequiredService<IConfiguration>()
+                                                          .GetValue<string>("Image_Password");
+
+                        if(string.IsNullOrEmpty(settings.Image.Password))
+                        {
+                            var logger = provider.GetRequiredService<ILogger<Settings>>();
+                            logger.LogError("No image password set");
+                        }
+
+                        return settings;
+                    });
                     services.AddTransient<IImageService, ImageService>();
                     services.AddTransient<IMqttService, MqttService>();
                 })
