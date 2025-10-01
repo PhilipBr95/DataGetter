@@ -1,4 +1,6 @@
-﻿using MQTTnet;
+﻿using DataGetter.Models;
+using Microsoft.Extensions.Logging;
+using MQTTnet;
 using System.Text.Json;
 
 namespace DataGetter.Services
@@ -14,10 +16,30 @@ namespace DataGetter.Services
             _logger = logger;
         }
 
+        public async Task RegisterDiscoveryAsync()
+        {
+            var mqttFactory = new MqttClientFactory();
+            var mqttClient = mqttFactory.CreateMqttClient();
+            var mqttClientOptions = new MqttClientOptionsBuilder()
+                .WithTcpServer(_settings.Mqtt)
+                .Build();
+
+            var result = await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
+            _logger.LogDebug($"Connected to MQTT broker {_settings.Mqtt}: {result.ResultCode}");
+
+            var applicationMessage = new MqttApplicationMessageBuilder()
+                .WithTopic("homeassistant/device/datagetter/datagetter/config")
+                .WithPayload(File.ReadAllText("./json/Discovery.json"))
+                .Build();
+
+            await mqttClient.PublishAsync(applicationMessage, CancellationToken.None);
+            await mqttClient.DisconnectAsync();
+        }
+
         public async Task SendMqttAsync<T>(string state, T payload)
         {
             var payloadType = payload.GetType().Name.ToLower();
-            _logger.LogInformation($"Sending {payloadType}... {state}");
+            _logger.LogInformation($"Sending {state}");
 
             var mqttFactory = new MqttClientFactory();
             using var mqttClient = mqttFactory.CreateMqttClient();
@@ -26,7 +48,7 @@ namespace DataGetter.Services
                 .Build();
 
             var result = await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
-            _logger.LogInformation($"Connected to MQTT broker {_settings.Mqtt}: {result.ResultCode}");
+            _logger.LogDebug($"Connected to MQTT broker {_settings.Mqtt}: {result.ResultCode}");
 
             var applicationMessage = new MqttApplicationMessageBuilder()
                 .WithTopic($"datagetter/{payloadType}/state")
@@ -43,29 +65,6 @@ namespace DataGetter.Services
 
             await mqttClient.PublishAsync(applicationMessage2, CancellationToken.None);
             await mqttClient.DisconnectAsync();
-        }
-
-        public async Task SendMqttImageAsync(MediaFile mediaFile)
-        {
-            var payloadType = nameof(Media).ToLower();
-            _logger.LogInformation($"Sending {payloadType}... ??");
-
-            var mqttFactory = new MqttClientFactory();
-            using var mqttClient = mqttFactory.CreateMqttClient();
-            var mqttClientOptions = new MqttClientOptionsBuilder()
-                .WithTcpServer(_settings.Mqtt)
-                .Build();
-
-            var result = await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
-            _logger.LogInformation($"Connected to MQTT broker {_settings.Mqtt}: {result.ResultCode}");
-
-            var applicationMessage = new MqttApplicationMessageBuilder()
-                .WithTopic($"datagetter/{payloadType}/state")
-                .WithPayload(mediaFile.Data)
-                .Build();
-
-            await mqttClient.PublishAsync(applicationMessage, CancellationToken.None);
-            await mqttClient.DisconnectAsync();
-        }
+        }     
     }
 }

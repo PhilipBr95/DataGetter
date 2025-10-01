@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DataGetter
+namespace DataGetter.Models
 {
     internal class Settings
     {
@@ -18,14 +18,6 @@ namespace DataGetter
             "BBC News app",
             "Play now",
         ];
-
-        public ImageSettings Image = new ImageSettings()
-        {
-            Host = "192.168.1.151",
-            Username = "Phil",
-            Password = null,
-            Paths = new List<string> { "/photo/Phil's Phone", "/photo/Gill's Phone" }
-        };
         
         public int ChangeArticleEverySeconds = 30;
         public int RefreshArticlesEveryCycle = 60;

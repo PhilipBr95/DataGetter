@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using DataGetter.Models;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
 using System.Runtime;
@@ -13,18 +14,15 @@ namespace DataGetter.Services
         private bool _looping = true;
 
         private IEnumerable<Article> _Articles = new List<Article>();
-        private IEnumerable<Media> _Media = new List<Media>();
 
         private Settings _settings = new Settings();
         private IMqttService _mqttService;
-        private IImageService _imageService;
 
         private readonly ILogger<ConsoleService> _logger;
 
-        public ConsoleService(IMqttService mqttService, IImageService imageService, ILogger<ConsoleService> logger)
+        public ConsoleService(IMqttService mqttService, ILogger<ConsoleService> logger)
         {
             _mqttService = mqttService;
-            _imageService = imageService;
             _logger = logger;
         }
 
@@ -42,67 +40,49 @@ namespace DataGetter.Services
 
         async Task RunAsync()
         {
-
-            //Allows a full refresh on load
-            var isStarting = true;
-            var counter = 0;
-
-            var mqttFactory = new MqttClientFactory();
-
-            using var mqttClient = mqttFactory.CreateMqttClient();
-            var mqttClientOptions = new MqttClientOptionsBuilder()
-                .WithTcpServer(_settings.Mqtt)
-                .Build();
-
-            var result = await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
-            _logger.LogDebug($"Connected to MQTT broker {_settings.Mqtt}: {result.ResultCode}");
-
-            var applicationMessage = new MqttApplicationMessageBuilder()
-                .WithTopic("homeassistant/device/datagetter/datagetter/config")
-                .WithPayload(File.ReadAllText("./json/Discovery.json"))
-                .Build();
-
-            await mqttClient.PublishAsync(applicationMessage, CancellationToken.None);
-
-            //Run forever
-            while (_looping)
+            try
             {
-                //Do we need to refresh the articles?
-                if (isStarting || counter >= _settings.RefreshArticlesEveryCycle)
+                //Allows a full refresh on load
+                var isStarting = true;
+                var counter = 0;
+                
+                _mqttService.RegisterDiscoveryAsync();
+
+                //Run forever
+                while (_looping)
                 {
-                    if (_DownloadCount >= _settings.MaxDownloads)
+                    //Do we need to refresh the articles?
+                    if (isStarting || counter >= _settings.RefreshArticlesEveryCycle)
                     {
-                        _logger.LogInformation("Max downloads reached, exiting...");
-                        return;
+                        if (_DownloadCount >= _settings.MaxDownloads)
+                        {
+                            _logger.LogInformation("Max downloads reached, exiting...");
+                            return;
+                        }
+
+                        if (isStarting || IsSleeping(_settings) == false)
+                        {
+                            _DownloadCount++;
+                            await DownloadArticlesAsync();
+                        }
+                        else
+                            _DownloadCount = 0;
+
+                        isStarting = false;
+                        counter = 0;
                     }
 
-                    if (isStarting || IsSleeping(_settings) == false)
-                    {
-                        _DownloadCount++;
-                        await DownloadArticlesAsync();
-                        await RefreshImagesAsync();
-                    }
-                    else
-                        _DownloadCount = 0;
+                    await SendArticleAsync();
 
-                    isStarting = false;
-                    counter = 0;
+                    //Pause for the specified time
+                    await Task.Delay(TimeSpan.FromSeconds(_settings.ChangeArticleEverySeconds));
+                    counter++;
                 }
-
-                await SendMediaAsync();
-                await SendArticleAsync();
-
-                //Pause for the specified time
-                await Task.Delay(TimeSpan.FromSeconds(_settings.ChangeArticleEverySeconds));
-                counter++;
             }
-
-            await mqttClient.DisconnectAsync();
-        }
-
-        private async Task RefreshImagesAsync()
-        {
-            _Media = _imageService.GetImages();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred in the main loop.");
+            }
         }
 
         private bool IsSleeping(Settings settings)
@@ -163,11 +143,12 @@ namespace DataGetter.Services
                     if (!IgnoreArticle(article))
                     {
                         articles.Add(article);
-                        _logger.LogInformation($"Downloaded {article.Title}");
+                        _logger.LogDebug($"Downloaded {article.Title}");
                     }
                 }
             }
 
+            _logger.LogInformation($"Downloaded {articles.Count} articles");
             _Articles = articles.OrderByDescending(a => a.PublishedDate)
                                 .ToList();
         }
@@ -176,21 +157,6 @@ namespace DataGetter.Services
         {
             return _settings.IgnoredTitles.Any(ia =>                 
                 article.Title.Contains(ia, StringComparison.InvariantCultureIgnoreCase));
-        }
-
-        private async Task SendMediaAsync()
-        {
-            if (_Media.Count() == 0)
-            {
-                _logger.LogInformation("No media available to send :-(");
-                return;
-            }
-
-            var index = Random.Shared.Next(0, _Media.Count());
-            var media = _Media.ElementAt(index);
-            var mediaFile = _imageService.GetImage(media.Filename);
-
-            await _mqttService.SendMqttImageAsync(mediaFile);
         }
 
         private async Task SendArticleAsync()

@@ -3,26 +3,10 @@
     "DataGetter": {
       "commandName": "Project",
       "environmentVariables": {
-        "Image_Password": "Fred1995"
       }
     },
     "Container (Dockerfile)": {
       "commandName": "Docker"
-    },
-    "ConsoleAppDev": {
-      "commandName": "Project",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "https://localhost:5043;http://localhost:5080"
-    }
-  },
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:62636/",
-      "sslPort": 44384
     }
   }
 }

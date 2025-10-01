@@ -1,4 +1,9 @@
-﻿using DataGetter.Services;
+﻿using Microsoft.Extensions.Logging; 
+using DataGetter.Models;
+using DataGetter.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace DataGetter
 {
@@ -22,34 +27,21 @@ namespace DataGetter
                     configApp.AddEnvironmentVariables();
                     configApp.AddCommandLine(args);
                 })
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddTransient<Settings>(provider =>
                     {
+                        //IOptions???
                         var settings = new Settings();
-
-                        settings.Image.Password = provider.GetRequiredService<IConfiguration>()
-                                                          .GetValue<string>("Image_Password");
-
-                        if(string.IsNullOrEmpty(settings.Image.Password))
-                        {
-                            var logger = provider.GetRequiredService<ILogger<Settings>>();
-                            logger.LogError("No image password set");
-                        }
-
                         return settings;
                     });
-                    services.AddTransient<IImageService, ImageService>();
                     services.AddTransient<IMqttService, MqttService>();
+                    services.AddHostedService<ConsoleService>();
                 })
                 .ConfigureLogging((hostContext, configLogging) =>
                 {
                     configLogging.ClearProviders();
-                    configLogging.AddConsole();
+                    configLogging.AddConsole();                    
                     configLogging.AddDebug();
                 })
                 .UseConsoleLifetime()
