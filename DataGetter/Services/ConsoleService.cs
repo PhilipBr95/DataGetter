@@ -1,15 +1,12 @@
 ﻿using DataGetter.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using MQTTnet;
-using System.Runtime;
 using System.Xml;
 
 namespace DataGetter.Services
 {
     internal class ConsoleService : IHostedService
-    {
-        private int _DownloadCount = 0;
+    {        
         private int _CurrentArticleIndex = 0;
         private bool _looping = true;
 
@@ -45,8 +42,10 @@ namespace DataGetter.Services
                 //Allows a full refresh on load
                 var isStarting = true;
                 var counter = 0;
-                
-                _mqttService.RegisterDiscoveryAsync();
+                var dayOfWeek = DateTime.Now.DayOfWeek;
+                int downloadCount = 0;
+
+                await _mqttService.RegisterDiscoveryAsync();
 
                 //Run forever
                 while (_looping)
@@ -54,28 +53,39 @@ namespace DataGetter.Services
                     //Do we need to refresh the articles?
                     if (isStarting || counter >= _settings.RefreshArticlesEveryCycle)
                     {
-                        if (_DownloadCount >= _settings.MaxDownloads)
+                        if (downloadCount >= _settings.MaxDownloads)
                         {
+                            counter = 0;
+
                             _logger.LogInformation("Max downloads reached, exiting...");
-                            return;
+                            continue;
                         }
 
                         if (isStarting || IsSleeping(_settings) == false)
                         {
-                            _DownloadCount++;
+                            downloadCount++;
                             await DownloadArticlesAsync();
                         }
-                        else
-                            _DownloadCount = 0;
-
+                        
                         isStarting = false;
                         counter = 0;
+
+                        //Has the day changed?
+                        if (dayOfWeek != DateTime.Now.DayOfWeek)
+                        {
+                            //Reset the count
+                            downloadCount = 0;
+
+                            dayOfWeek = DateTime.Now.DayOfWeek;
+                            _logger.LogInformation($"Day changed to {dayOfWeek}");
+                        }
                     }
 
                     await SendArticleAsync();
 
                     //Pause for the specified time
                     await Task.Delay(TimeSpan.FromSeconds(_settings.ChangeArticleEverySeconds));
+
                     counter++;
                 }
             }
@@ -176,6 +186,5 @@ namespace DataGetter.Services
 
             await _mqttService.SendMqttAsync(article.PublishedDate, article);
         }
-
     }
 }

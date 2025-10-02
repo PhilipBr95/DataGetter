@@ -21,7 +21,8 @@ namespace DataGetter.Models
         
         public int ChangeArticleEverySeconds = 30;
         public int RefreshArticlesEveryCycle = 60;
-        public int MaxDownloads = 100;
+        public int MaxDownloads = 50;
+
         public IEnumerable<SleepTime> SleepTimes =
         [
             new()
