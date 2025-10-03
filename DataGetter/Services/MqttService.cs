@@ -37,9 +37,8 @@ namespace DataGetter.Services
         }
 
         public async Task SendMqttAsync<T>(string state, T payload)
-        {
-            var payloadType = payload.GetType().Name.ToLower();
-            _logger.LogInformation($"Sending {state}");
+        {            
+            var payloadType = payload.GetType().Name.ToLower();                    
 
             var mqttFactory = new MqttClientFactory();
             using var mqttClient = mqttFactory.CreateMqttClient();
@@ -65,6 +64,6 @@ namespace DataGetter.Services
 
             await mqttClient.PublishAsync(applicationMessage2, CancellationToken.None);
             await mqttClient.DisconnectAsync();
-        }     
+        }
     }
 }

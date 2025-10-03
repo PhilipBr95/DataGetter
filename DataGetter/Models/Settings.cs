@@ -1,11 +1,4 @@
-﻿using MQTTnet;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DataGetter.Models
+﻿namespace DataGetter.Models
 {
     internal class Settings
     {
@@ -17,6 +10,8 @@ namespace DataGetter.Models
         public string[] IgnoredTitles = [
             "BBC News app",
             "Play now",
+            "Weekly quiz",
+            "Watch on iplayer",
         ];
         
         public int ChangeArticleEverySeconds = 30;
@@ -51,6 +46,7 @@ namespace DataGetter.Models
                                 DayOfWeek.Sunday],
                 TimeRanges = [
                     new TimeRange()
+        
                     {
                         Start = new TimeSpan(1, 0, 0),
                         End = new TimeSpan(9, 0, 0)
