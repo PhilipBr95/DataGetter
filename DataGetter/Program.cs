@@ -41,7 +41,11 @@ namespace DataGetter
                 .ConfigureLogging((hostContext, configLogging) =>
                 {
                     configLogging.ClearProviders();
-                    configLogging.AddConsole();                    
+                    configLogging.AddSimpleConsole(options =>
+                    {
+                        options.TimestampFormat = "HH:mm:ss "; // Format: Hour:Minute:Second                     
+                        options.SingleLine = true; // Optional: log to a single line
+                    });                    
                     configLogging.AddDebug();
                 })
                 .UseConsoleLifetime()
