@@ -148,8 +148,8 @@ namespace DataGetter.Services
                         PublishedDate = item["pubDate"]?.InnerText,
                         Description = item["description"]?.InnerText,
                         ImageUrl_Small = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/400/"),
-                        ImageUrl_Medium = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/1200/"),
-                        ImageUrl_Large = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/1800/"),
+                        ImageUrl_Medium = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/800/"),
+                        ImageUrl_Large = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/1200/"),
                         ImageUrl_Larger = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/1920/"),
                         ImageUrl_ExtraLarge = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/2048/")
                     };
