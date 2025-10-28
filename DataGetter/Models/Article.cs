@@ -13,5 +13,6 @@
         public string ImageUrl_Large { get; set; }
         public string ImageUrl_Larger { get; set; }
         public string ImageUrl_ExtraLarge { get; set; }
+        public string? ImageUrl_Smaller { get; internal set; }
     }
 }
