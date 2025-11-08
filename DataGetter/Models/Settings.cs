@@ -4,7 +4,8 @@
     {
         public string[] Urls =
         [
-            "https://feeds.bbci.co.uk/news/rss.xml?edition=uk"
+            //"https://feeds.bbci.co.uk/news/rss.xml?edition=uk",
+            "https://feeds.skynews.com/feeds/rss/uk.xml"
         ];
 
         public string[] IgnoredTitles = [
