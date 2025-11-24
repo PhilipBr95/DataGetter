@@ -189,7 +189,7 @@ namespace DataGetter.Services
 
             var article = _Articles.ElementAt(_CurrentArticleIndex);
 
-            _logger.LogInformation("Sending {Message}", article.Title);
+            _logger.LogInformation("Sending {index}/{total} - {Message}", _CurrentArticleIndex, _Articles.Count(), article.Title);
             await _mqttService.SendMqttAsync(article.PublishedDate, article);
         }
     }
