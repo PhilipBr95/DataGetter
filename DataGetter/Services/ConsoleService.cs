@@ -161,9 +161,11 @@ namespace DataGetter.Services
                         _logger.LogDebug($"Downloaded {article.Title}");
                     }
                 }
+
+                _logger.LogInformation($"Downloaded {items.Count} articles from {url}");
             }
 
-            _logger.LogInformation($"Downloaded {articles.Count} articles");
+            _logger.LogInformation($"Total cached articles: {articles.Count}");
             _Articles = articles.OrderByDescending(a => a.PublishedDate)
                                 .ToList();
         }
