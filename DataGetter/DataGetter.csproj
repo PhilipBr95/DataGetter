@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="certs\aspnetapp.pfx" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="certs\aspnetapp.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
