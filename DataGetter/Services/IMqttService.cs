@@ -1,7 +1,7 @@
 ﻿
 namespace DataGetter.Services
 {
-    internal interface IMqttService
+    public interface IMqttService
     {
         Task RegisterDiscoveryAsync();
         Task SendMqttAsync<T>(string state, T payload);     

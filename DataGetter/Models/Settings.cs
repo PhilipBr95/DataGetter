@@ -1,6 +1,6 @@
 ﻿namespace DataGetter.Models
 {
-    internal class Settings
+    public class Settings
     {
         public string[] Urls =
         [
@@ -18,6 +18,7 @@
         public int ChangeArticleEverySeconds = 30;
         public int RefreshArticlesEveryCycle = 60;
         public int MaxDownloads = 50;
+        public bool UseMqtt = false;
 
         public IEnumerable<SleepTime> SleepTimes =
         [

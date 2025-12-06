@@ -1,6 +1,6 @@
 ﻿namespace DataGetter.Models
 {
-    internal class TimeRange
+    public class TimeRange
     {
         public TimeRange()
         {

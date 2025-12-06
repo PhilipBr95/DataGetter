@@ -1,25 +1,25 @@
 ﻿using DataGetter.Models;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using System.Runtime;
 using System.Xml;
 
 namespace DataGetter.Services
 {
-    internal class ConsoleService : IHostedService
-    {        
-        private int _CurrentArticleIndex = 0;
+    public class ConsoleService : IHostedService, IConsoleService
+    {       
         private bool _looping = true;
 
-        private IEnumerable<Article> _Articles = new List<Article>();
+        private static int _CurrentArticleIndex = 0;
+        private static IEnumerable<Article> _Articles = new List<Article>();
 
         private Settings _settings = new Settings();
         private IMqttService _mqttService;
 
         private readonly ILogger<ConsoleService> _logger;
 
-        public ConsoleService(IMqttService mqttService, ILogger<ConsoleService> logger)
+        public ConsoleService(IMqttService mqttService, Settings settings, ILogger<ConsoleService> logger)
         {
             _mqttService = mqttService;
+            _settings = settings;
             _logger = logger;
         }
 
@@ -45,7 +45,8 @@ namespace DataGetter.Services
                 var dayOfWeek = DateTime.Now.DayOfWeek;
                 int downloadCount = 0;
 
-                await _mqttService.RegisterDiscoveryAsync();
+                if(_settings.UseMqtt)
+                    await _mqttService.RegisterDiscoveryAsync();
 
                 //Run forever
                 while (_looping)
@@ -66,7 +67,7 @@ namespace DataGetter.Services
                             downloadCount++;
                             await DownloadArticlesAsync();
                         }
-                        
+
                         isStarting = false;
                         counter = 0;
 
@@ -81,7 +82,8 @@ namespace DataGetter.Services
                         }
                     }
 
-                    await SendArticleAsync();
+                    if(_settings.UseMqtt)
+                        await SendArticleAsync();
 
                     //Pause for the specified time
                     await Task.Delay(TimeSpan.FromSeconds(_settings.ChangeArticleEverySeconds));
@@ -123,7 +125,7 @@ namespace DataGetter.Services
 
             return false;
         }
-        
+
         private async Task DownloadArticlesAsync()
         {
             _logger.LogInformation("Refreshing articles...");
@@ -172,27 +174,36 @@ namespace DataGetter.Services
 
         private bool IgnoreArticle(Article article)
         {
-            return _settings.IgnoredTitles.Any(ia =>                 
+            return _settings.IgnoredTitles.Any(ia =>
                 article.Title.Contains(ia, StringComparison.InvariantCultureIgnoreCase));
         }
 
         private async Task SendArticleAsync()
         {
-            if (_Articles.Count() == 0)
+            var article = GetArticle();
+
+            if (article == null)
+                return;
+
+            _logger.LogInformation("Sending {index}/{total} - {Message}", _CurrentArticleIndex, _Articles.Count(), article.Title);
+            await _mqttService.SendMqttAsync(article.PublishedDate, article);
+        }
+
+        public Article? GetArticle()
+        {
+            if (_Articles?.Count() == 0)
             {
                 _logger.LogInformation("No articles available to send :-(");
-                return;
+                return null;
             }
 
             _CurrentArticleIndex++;
 
-            if (_CurrentArticleIndex >= _Articles.Count())
+            if (_CurrentArticleIndex >= _Articles!.Count())
                 _CurrentArticleIndex = 0;
 
-            var article = _Articles.ElementAt(_CurrentArticleIndex);
-
-            _logger.LogInformation("Sending {index}/{total} - {Message}", _CurrentArticleIndex, _Articles.Count(), article.Title);
-            await _mqttService.SendMqttAsync(article.PublishedDate, article);
+            var article = _Articles!.ElementAt(_CurrentArticleIndex);
+            return article;
         }
     }
 }
