@@ -14,7 +14,12 @@
             "Weekly quiz",
             "Watch on iplayer",
         ];
-        
+
+        public string[] IgnoredLinks = [
+            "https://www.bbc.co.uk/iplayer",
+            "https://www.bbc.co.uk/sounds"
+        ];
+
         public int ChangeArticleEverySeconds = 30;
         public int RefreshArticlesEveryCycle = 60;
         public int MaxDownloads = 50;

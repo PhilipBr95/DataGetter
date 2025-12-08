@@ -174,11 +174,28 @@ namespace DataGetter.Services
 
         private bool IgnoreArticle(Article article)
         {
-            return _settings.IgnoredTitles.Any(ia =>
+            var ignore = _settings.IgnoredTitles.Any(ia =>
                 article.Title.Contains(ia, StringComparison.InvariantCultureIgnoreCase));
+
+            if (ignore)
+            {
+                _logger.LogInformation($"Ignoring article(Title): {article.Title}");
+                return ignore;
+            }
+
+            ignore = _settings.IgnoredLinks.Any(ia =>
+                article.Link.Contains(ia, StringComparison.InvariantCultureIgnoreCase));
+
+            if (ignore)
+            {
+                _logger.LogInformation($"Ignoring article(Link): {article.Title}");
+                return ignore;
+            }
+
+            return false;
         }
 
-        private async Task SendArticleAsync()
+        public async Task SendArticleAsync()
         {
             var article = GetArticle();
 

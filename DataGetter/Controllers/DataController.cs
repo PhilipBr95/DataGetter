@@ -18,11 +18,18 @@ namespace DataGetter.Controllers
             _logger = logger;
         }
 
-        [HttpGet(Name = "GetData")]
-        public Article Get()
+        [HttpGet(Name = "GetArticle")]
+        public Article? Get()
         {
             var article = _consoleService.GetArticle();
             return article;
+        }
+
+        [HttpPut(Name = "SendArticleAsync")]
+        public IActionResult SendArticleAsync()
+        {
+            _ = _consoleService.SendArticleAsync();
+            return Ok();
         }
     }
 }
