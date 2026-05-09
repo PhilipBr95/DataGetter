@@ -131,40 +131,76 @@ namespace DataGetter.Services
             _logger.LogInformation("Refreshing articles...");
             var articles = new List<Article>();
 
-            foreach (var url in _settings.Urls)
+            var sources = _settings.Sources.Where(s => s.Enabled);
+            foreach (var source in sources)
             {
+                var sourceArticles = new List<Article>();
                 var client = new HttpClient();
-                var response = await client.GetAsync(url);
+                var response = await client.GetAsync(source.Url);
                 var content = await response.Content.ReadAsStringAsync();
                 var doc = new XmlDocument();
 
                 doc.LoadXml(content);
                 var items = doc.GetElementsByTagName("item");
 
+                _logger.LogInformation($"Source: {source.SourceName}");
+
                 foreach (XmlNode item in items)
                 {
-                    var article = new Article
+                    try
                     {
-                        Title = item["title"]?.InnerText.Trim(),
-                        Link = item["link"]?.InnerText,
-                        PublishedDate = item["pubDate"]?.InnerText,
-                        Description = item["description"]?.InnerText,
-                        ImageUrl_Smaller = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/400/"),
-                        ImageUrl_Small = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/640/"),
-                        ImageUrl_Medium = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/800/"),
-                        ImageUrl_Large = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/1200/"),
-                        ImageUrl_Larger = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/1920/"),
-                        ImageUrl_ExtraLarge = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/2048/")
-                    };
+                        var article = new Article
+                        {
+                            Title = item["title"]?.InnerText.Trim(),
+                            Link = item["link"]?.InnerText,
+                            PublishedDate = item["pubDate"]?.InnerText,
+                            Description = item["description"]?.InnerText,
+                            //ImageUrl_Smaller = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/400/"),
+                            ImageUrl = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/640/") ??
+                                       item["media:content"]?.Attributes["url"]?.Value.Replace("/240/", "/640/"),
+                            //ImageUrl_Medium = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/800/"),
+                            //ImageUrl_Large = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/1200/"),
+                            //ImageUrl_Larger = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/1920/"),
+                            //ImageUrl_ExtraLarge = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/2048/"),
+                            Categories = (item as XmlElement)?.GetElementsByTagName("category")
+                                                             ?.Cast<XmlNode>()
+                                                             .Select(s => s.InnerText)
+                                                             .ToArray()
+                        };
 
-                    if (!IgnoreArticle(article))
+                        if (article.ImageUrl is null)
+                        {
+                            var html = item["content:encoded"]?.InnerText;
+                            var start = html?.IndexOf("<img") ?? 0;
+                            if (start > 0)
+                            {
+                                var end = html!.IndexOf(">", start);
+                                if (end > 0)
+                                {
+                                    var imageHtml = html.Substring(start, (end - start) + 1);
+                                    article.ImageUrl = imageHtml.Split("src=\"")[1].Split("\"")[0];
+                                }
+                                else
+                                {
+                                    Console.WriteLine("No img");
+                                }
+                            }
+                        }
+
+                        if (!IgnoreArticle(source, article))
+                        {
+                            sourceArticles.Add(article);
+                            _logger.LogDebug($"    Downloaded {article.Title}");
+                        }
+                    }
+                    catch(Exception ex)
                     {
-                        articles.Add(article);
-                        _logger.LogDebug($"Downloaded {article.Title}");
+                        _logger.LogError(ex, item["title"]?.InnerText.Trim());
                     }
                 }
 
-                _logger.LogInformation($"Downloaded {items.Count} articles from {url}");
+                articles.AddRange(sourceArticles);
+                _logger.LogInformation($"Downloaded {sourceArticles.Count} articles from {source.SourceName}");
             }
 
             _logger.LogInformation($"Total cached articles: {articles.Count}");
@@ -172,23 +208,39 @@ namespace DataGetter.Services
                                 .ToList();
         }
 
-        private bool IgnoreArticle(Article article)
-        {
-            var ignore = _settings.IgnoredTitles.Any(ia =>
-                article.Title.Contains(ia, StringComparison.InvariantCultureIgnoreCase));
+        private bool IgnoreArticle(Source source, Article article)
+        {            
+            var ignore = _settings.IgnoredTitles
+                                  .Where(w => w.SourceName is null || w.SourceName == source.SourceName)
+                                  .Any(ia => article.Title.Contains(ia.Value, StringComparison.InvariantCultureIgnoreCase));
 
             if (ignore)
             {
-                _logger.LogInformation($"Ignoring article(Title): {article.Title}");
+                _logger.LogInformation($"    Ignoring article(Title): {article.Title}");
                 return ignore;
             }
 
-            ignore = _settings.IgnoredLinks.Any(ia =>
-                article.Link.Contains(ia, StringComparison.InvariantCultureIgnoreCase));
+            ignore = _settings.IgnoredLinks
+                              .Where(w => w.SourceName is null || w.SourceName == source.SourceName)
+                              .Any(ia => article.Link.Contains(ia.Value, StringComparison.InvariantCultureIgnoreCase));
 
             if (ignore)
             {
-                _logger.LogInformation($"Ignoring article(Link): {article.Title}");
+                _logger.LogInformation($"    Ignoring article(Link): {article.Title}");
+                return ignore;
+            }
+
+            if (article.Categories == null || article.Categories.Length == 0)
+                return false;
+
+            ignore = _settings.IgnoredCategories
+                              .Where(w => w.SourceName is null || w.SourceName == source.SourceName)
+                              .Any(ia => article.Categories
+                              .Any(a => a.Contains(ia.Value, StringComparison.InvariantCultureIgnoreCase)));
+
+            if (ignore)
+            {
+                _logger.LogInformation($"    Ignoring article(Category): {article.Title}");
                 return ignore;
             }
 
