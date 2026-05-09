@@ -151,6 +151,7 @@ namespace DataGetter.Services
                     {
                         var article = new Article
                         {
+                            Source = source.SourceName,
                             Title = item["title"]?.InnerText.Trim(),
                             Link = item["link"]?.InnerText,
                             PublishedDate = item["pubDate"]?.InnerText,

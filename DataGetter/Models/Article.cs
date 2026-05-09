@@ -9,5 +9,6 @@
 
         public string ImageUrl { get; set; }
         public string[]? Categories { get; set; }
+        public string Source { get; set; }
     }
 }
