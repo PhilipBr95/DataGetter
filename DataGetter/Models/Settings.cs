@@ -30,7 +30,7 @@
             new IgnoredSourceItem{ SourceName = "BBC", Value ="https://www.bbc.co.uk/sounds" }
         ];
 
-        public int ChangeArticleEverySeconds = 30;
+        public int ChangeArticleEverySeconds = 50;
         public int RefreshArticlesEveryCycle = 60;
         public int MaxDownloads = 50;
         public bool UseMqtt = false;
