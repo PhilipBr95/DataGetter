@@ -25,7 +25,7 @@ namespace DataGetter.Services
                 .Build();
 
             var result = await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
-            _logger.LogDebug($"Connected to MQTT broker {_settings.Mqtt}: {result.ResultCode}");
+            //_logger.LogDebug($"Connected to MQTT broker {_settings.Mqtt}: {result.ResultCode}");
 
             var applicationMessage = new MqttApplicationMessageBuilder()
                 .WithTopic("homeassistant/device/datagetter/datagetter/config")

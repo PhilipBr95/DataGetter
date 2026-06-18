@@ -153,7 +153,7 @@ namespace DataGetter.Services
                     {
 
                         var pubDate = DateTime.Parse(item["pubDate"]?.InnerText);
-                        var title = $"{pubDate.ToString("ddd")} {item["title"]?.InnerText.Trim()}";
+                        var title = $"{pubDate.ToString("ddd")}: {item["title"]?.InnerText.Trim()}";
 
                         var article = new Article
                         {
