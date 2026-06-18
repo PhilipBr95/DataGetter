@@ -51,6 +51,8 @@ namespace DataGetter.Services
                 //Run forever
                 while (_looping)
                 {
+                    _logger.LogDebug($"Looping... Counter: {counter}, DownloadCount: {downloadCount}, DayOfWeek: {dayOfWeek}");
+
                     //Do we need to refresh the articles?
                     if (isStarting || counter >= _settings.RefreshArticlesEveryCycle)
                     {
@@ -149,10 +151,14 @@ namespace DataGetter.Services
                 {
                     try
                     {
+
+                        var pubDate = DateTime.Parse(item["pubDate"]?.InnerText);
+                        var title = $"{pubDate.ToString("ddd")} {item["title"]?.InnerText.Trim()}";
+
                         var article = new Article
                         {
                             Source = source.SourceName,
-                            Title = item["title"]?.InnerText.Trim(),
+                            Title = title,
                             Link = item["link"]?.InnerText,
                             PublishedDate = item["pubDate"]?.InnerText,
                             Description = item["description"]?.InnerText,

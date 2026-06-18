@@ -38,7 +38,7 @@ namespace DataGetter
                     consoleOptions.TimestampFormat = "HH:mm:ss ";
                     consoleOptions.SingleLine = true;
                 });
-                options.AddDebug().SetMinimumLevel(LogLevel.Debug);
+                options.AddDebug().SetMinimumLevel(LogLevel.Information);
             });
 
             builder.Services.AddTransient<Settings>(provider =>
