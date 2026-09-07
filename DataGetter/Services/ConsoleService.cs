@@ -1,4 +1,5 @@
 ﻿using DataGetter.Models;
+using System.Diagnostics.Metrics;
 using System.Runtime;
 using System.Xml;
 
@@ -35,15 +36,16 @@ namespace DataGetter.Services
             _looping = false;
         }
 
+        private int _counter = 0;
+        private int _downloadCount = 0;
+
         async Task RunAsync()
         {
             try
             {
                 //Allows a full refresh on load
-                var isStarting = true;
-                var counter = 0;
-                var dayOfWeek = DateTime.Now.DayOfWeek;
-                int downloadCount = 0;
+                var isStarting = true;                
+                var dayOfWeek = DateTime.Now.DayOfWeek;                
 
                 if(_settings.UseMqtt)
                     await _mqttService.RegisterDiscoveryAsync();
@@ -51,14 +53,14 @@ namespace DataGetter.Services
                 //Run forever
                 while (_looping)
                 {
-                    _logger.LogDebug($"Looping... Counter: {counter}, DownloadCount: {downloadCount}, DayOfWeek: {dayOfWeek}");
+                    _logger.LogDebug($"Looping... Counter: {_counter}, DownloadCount: {_downloadCount}, DayOfWeek: {dayOfWeek}");
 
                     //Do we need to refresh the articles?
-                    if (isStarting || counter >= _settings.RefreshArticlesEveryCycle)
+                    if (isStarting || _counter >= _settings.RefreshArticlesEveryCycle)
                     {
-                        if (downloadCount >= _settings.MaxDownloads)
+                        if (_downloadCount >= _settings.MaxDownloads)
                         {
-                            counter = 0;
+                            _counter = 0;
 
                             _logger.LogInformation("Max downloads reached, exiting...");
                             continue;
@@ -66,18 +68,18 @@ namespace DataGetter.Services
 
                         if (isStarting || IsSleeping(_settings) == false)
                         {
-                            downloadCount++;
+                            _downloadCount++;
                             await DownloadArticlesAsync();
                         }
 
                         isStarting = false;
-                        counter = 0;
+                        _counter = 0;
 
                         //Has the day changed?
                         if (dayOfWeek != DateTime.Now.DayOfWeek)
                         {
                             //Reset the count
-                            downloadCount = 0;
+                            _downloadCount = 0;
 
                             dayOfWeek = DateTime.Now.DayOfWeek;
                             _logger.LogInformation($"Day changed to {dayOfWeek}");
@@ -90,13 +92,18 @@ namespace DataGetter.Services
                     //Pause for the specified time
                     await Task.Delay(TimeSpan.FromSeconds(_settings.ChangeArticleEverySeconds));
 
-                    counter++;
+                    _counter++;
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred in the main loop.");
             }
+        }
+        private void ResetNumbers()
+        {
+            _counter = 0;
+            _downloadCount = 0;
         }
 
         private bool IsSleeping(Settings settings)
@@ -160,7 +167,7 @@ namespace DataGetter.Services
                             Source = source.SourceName,
                             Title = title,
                             Link = item["link"]?.InnerText,
-                            PublishedDate = item["pubDate"]?.InnerText,
+                            PublishedDate = pubDate,
                             Description = item["description"]?.InnerText,
                             //ImageUrl_Smaller = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/400/"),
                             ImageUrl = item["media:thumbnail"]?.Attributes["url"]?.Value.Replace("/240/", "/640/") ??
@@ -256,21 +263,29 @@ namespace DataGetter.Services
 
         public async Task SendArticleAsync()
         {
-            var article = GetArticle();
+            var article = await GetArticleAsync();
 
             if (article == null)
                 return;
 
             _logger.LogInformation("Sending {index}/{total} - {Message}", _CurrentArticleIndex, _Articles.Count(), article.Title);
-            await _mqttService.SendMqttAsync(article.PublishedDate, article);
+            await _mqttService.SendMqttAsync(article.PublishedDate.ToString(), article);
         }
 
-        public Article? GetArticle()
+        public async Task<Article?> GetArticleAsync()
         {
             if (_Articles?.Count() == 0)
             {
                 _logger.LogInformation("No articles available to send :-(");
                 return null;
+            }
+
+            //Check everything looks good
+            if(_Articles.All(a => DateTime.Now - a.PublishedDate > TimeSpan.FromDays(1)))
+            {
+                _logger.LogWarning("All articles are older than 1 day.");
+
+                ResetNumbers();
             }
 
             _CurrentArticleIndex++;
@@ -281,5 +296,6 @@ namespace DataGetter.Services
             var article = _Articles!.ElementAt(_CurrentArticleIndex);
             return article;
         }
+
     }
 }

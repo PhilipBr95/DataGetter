@@ -4,7 +4,7 @@ namespace DataGetter.Services
 {
     public interface IConsoleService
     {
-        Article? GetArticle();
+        Task<Article?> GetArticleAsync();
         Task SendArticleAsync();
     }
 }

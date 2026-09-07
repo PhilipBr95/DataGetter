@@ -19,16 +19,16 @@ namespace DataGetter.Controllers
         }
 
         [HttpGet(Name = "GetArticle")]
-        public Article? Get()
+        public async Task<Article?> Get()
         {
-            var article = _consoleService.GetArticle();
+            var article = await _consoleService.GetArticleAsync();
             return article;
         }
 
         [HttpPut(Name = "SendArticleAsync")]
-        public IActionResult SendArticleAsync()
+        public async Task<IActionResult> SendArticleAsync()
         {
-            _ = _consoleService.SendArticleAsync();
+            await _consoleService.SendArticleAsync();
             return Ok();
         }
     }
